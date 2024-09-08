@@ -1,0 +1,436 @@
+<html><head><base href="https://www.yolosimulator.com/">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chiffrement AES-256 avec PBKDF2 et Expiration</title>
+<link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+    body {
+        font-family: 'Exo 2', sans-serif;
+        background: linear-gradient(45deg, #0f0c29, #302b63, #24243e);
+        color: #fff;
+        margin: 0;
+        padding: 20px;
+        min-height: 100vh;
+    }
+    .container {
+        max-width: 800px;
+        margin: auto;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 30px;
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        animation: glow 3s infinite alternate;
+    }
+    h1, h2 {
+        color: #00ffff;
+        text-align: center;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+    }
+    textarea, input[type="text"], input[type="password"], select {
+        width: 100%;
+        padding: 12px;
+        margin-bottom: 15px;
+        border: none;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.05);
+        color: #fff;
+        font-family: 'Exo 2', sans-serif;
+        transition: all 0.3s ease;
+    }
+    button {
+        display: block;
+        width: 100%;
+        padding: 12px;
+        background: linear-gradient(45deg, #00ffff, #00ccff);
+        color: #000;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        margin-bottom: 15px;
+        font-weight: bold;
+        text-transform: uppercase;
+        transition: all 0.3s ease;
+    }
+    button:hover {
+        background: linear-gradient(45deg, #00ccff, #00ffff);
+        box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+        transform: scale(1.02);
+    }
+    button:disabled {
+        background: #333;
+        color: #666;
+        cursor: not-allowed;
+    }
+    #qrcode {
+        background-color: #000000;
+        padding: 20px;
+        border-radius: 15px;
+        box-shadow: 0 0 20px rgba(255, 0, 255, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin: 20px auto;
+        width: fit-content;
+    }
+    #qrcode img {
+        display: block;
+        margin: 0 auto;
+    }
+    .section {
+        margin-bottom: 40px;
+        position: relative;
+        overflow: hidden;
+    }
+    .section::before {
+        content: '';
+        position: absolute;
+        top: -10px;
+        left: -10px;
+        right: -10px;
+        bottom: -10px;
+        background: linear-gradient(45deg, transparent, rgba(0, 255, 255, 0.1), transparent);
+        z-index: -1;
+        filter: blur(20px);
+    }
+    #encryptedOutput {
+        word-wrap: break-word;
+        background-color: rgba(0, 0, 0, 0.2);
+        border: 1px solid #00ffff;
+        padding: 15px;
+        margin-top: 15px;
+        border-radius: 8px;
+        font-family: 'Courier New', monospace;
+    }
+    .copy-btn, .share-btn, .download-btn {
+        background: linear-gradient(45deg, #ff00ff, #00ffff);
+        margin-top: 15px;
+    }
+    .copy-btn:hover, .share-btn:hover, .download-btn:hover {
+        background: linear-gradient(45deg, #00ffff, #ff00ff);
+    }
+    .feedback {
+        padding: 12px;
+        margin-top: 15px;
+        border-radius: 8px;
+        text-align: center;
+        font-weight: bold;
+    }
+    .success {
+        background-color: rgba(0, 255, 0, 0.2);
+        color: #00ff00;
+        border: 1px solid #00ff00;
+    }
+    .error {
+        background-color: rgba(255, 0, 0, 0.2);
+        color: #ff0000;
+        border: 1px solid #ff0000;
+    }
+    #expirationInfo, #decryptExpirationInfo {
+        text-align: center;
+        margin-top: 15px;
+        font-weight: bold;
+        color: #00ffff;
+    }
+    @keyframes glow {
+        0% { box-shadow: 0 0 5px rgba(0, 255, 255, 0.5); }
+        50% { box-shadow: 0 0 20px rgba(0, 255, 255, 0.8); }
+        100% { box-shadow: 0 0 5px rgba(0, 255, 255, 0.5); }
+    }
+</style>
+</head>
+<body>
+    <div class="container">
+        <h1>Chiffrement AES-256 avec PBKDF2 et Expiration</h1>
+        
+        <div class="section">
+            <h2>Chiffrer et générer un QR code</h2>
+            <textarea id="message" rows="4" placeholder="Entrez votre message ici"></textarea>
+            <input type="password" id="encryptKey" placeholder="Mot de passe">
+            <select id="expirationTime">
+                <option value="3600">1 heure</option>
+                <option value="86400">24 heures</option>
+                <option value="604800">1 semaine</option>
+            </select>
+            <button onclick="encryptAndGenerateQR()" disabled><i class="fas fa-lock"></i> Chiffrer et générer QR code</button>
+            <div id="encryptFeedback" class="feedback"></div>
+            <div id="encryptedOutput"></div>
+            <button class="copy-btn" onclick="copyEncrypted()"><i class="fas fa-copy"></i> Copier le message chiffré</button>
+            <div id="qrcode"></div>
+            <div id="expirationInfo"></div>
+            <button class="share-btn" onclick="shareQRCode()"><i class="fas fa-share-alt"></i> Partager le QR code</button>
+            <button class="download-btn" onclick="downloadQRCode()"><i class="fas fa-download"></i> Télécharger le QR code</button>
+        </div>
+        
+        <div class="section">
+            <h2>Décrypter un message</h2>
+            <textarea id="encryptedMessage" rows="4" placeholder="Collez le message chiffré ici"></textarea>
+            <input type="password" id="decryptKey" placeholder="Mot de passe">
+            <button onclick="decrypt()" disabled><i class="fas fa-unlock"></i> Décrypter</button>
+            <div id="decryptFeedback" class="feedback"></div>
+            <p id="decryptedMessage"></p>
+            <div id="decryptExpirationInfo"></div>
+        </div>
+    </div>
+
+    <script>
+        const PBKDF2_ITERATIONS = 10000;
+        const SALT_SIZE = 128 / 8;
+        let expirationInterval;
+        let decryptExpirationInterval;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            if (!navigator.share) {
+                document.querySelector('.share-btn').style.display = 'none';
+            }
+        });
+
+        function deriveKey(password, salt) {
+            return CryptoJS.PBKDF2(password, salt, {
+                keySize: 256 / 32,
+                iterations: PBKDF2_ITERATIONS
+            });
+        }
+
+        function encryptAndGenerateQR() {
+            const message = document.getElementById('message').value;
+            const password = document.getElementById('encryptKey').value;
+            const expirationTime = document.getElementById('expirationTime').value;
+            
+            if (!message || !password) {
+                showFeedback('encryptFeedback', 'Veuillez entrer un message et un mot de passe', 'error');
+                return;
+            }
+
+            const salt = CryptoJS.lib.WordArray.random(SALT_SIZE);
+            const key = deriveKey(password, salt);
+            const iv = CryptoJS.lib.WordArray.random(128 / 8);
+
+            const expirationDate = new Date(Date.now() + parseInt(expirationTime) * 1000).getTime();
+            const dataToEncrypt = JSON.stringify({
+                message: message,
+                expirationDate: expirationDate
+            });
+
+            const encrypted = CryptoJS.AES.encrypt(dataToEncrypt, key, {
+                mode: CryptoJS.mode.CBC,
+                padding: CryptoJS.pad.Pkcs7,
+                iv: iv
+            });
+
+            const encryptedMessage = salt.toString(CryptoJS.enc.Hex) + iv.toString(CryptoJS.enc.Hex) + encrypted.toString();
+            
+            document.getElementById('encryptedOutput').textContent = encryptedMessage;
+            
+            document.getElementById('qrcode').innerHTML = '';
+            new QRCode(document.getElementById('qrcode'), {
+                text: encryptedMessage,
+                width: 300,
+                height: 300,
+                colorDark: "#ff00ff",
+                colorLight: "#000000"
+            });
+
+            updateExpirationInfo(expirationDate);
+
+            document.querySelector('.share-btn').style.display = 'block';
+            document.querySelector('.download-btn').style.display = 'block';
+            
+            document.getElementById('message').value = '';
+            document.getElementById('encryptKey').value = '';
+            document.getElementById('expirationTime').selectedIndex = 0;
+
+            showFeedback('encryptFeedback', 'Message chiffré avec succès !', 'success');
+        }
+
+        function updateExpirationInfo(expirationDate) {
+            clearInterval(expirationInterval);
+            const expirationInfoElement = document.getElementById('expirationInfo');
+            
+            const updateTimer = () => {
+                const now = new Date().getTime();
+                const distance = expirationDate - now;
+                
+                if (distance < 0) {
+                    clearInterval(expirationInterval);
+                    expirationInfoElement.textContent = "Le message a expiré";
+                    return;
+                }
+                
+                const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+                
+                expirationInfoElement.textContent = `Expire dans : ${days}j ${hours}h ${minutes}m ${seconds}s`;
+            };
+
+            updateTimer();
+            expirationInterval = setInterval(updateTimer, 1000);
+        }
+
+        function copyEncrypted() {
+            const encryptedText = document.getElementById('encryptedOutput').textContent;
+            navigator.clipboard.writeText(encryptedText).then(() => {
+                showFeedback('encryptFeedback', 'Message chiffré copié dans le presse-papiers !', 'success');
+            }, (err) => {
+                console.error('Erreur lors de la copie: ', err);
+                showFeedback('encryptFeedback', 'Erreur lors de la copie du message', 'error');
+            });
+        }
+
+        function shareQRCode() {
+            const qrCodeImage = document.querySelector('#qrcode img');
+            if (qrCodeImage) {
+                if (navigator.share) {
+                    fetch(qrCodeImage.src)
+                        .then(res => res.blob())
+                        .then(blob => {
+                            const file = new File([blob], 'qrcode.png', { type: 'image/png' });
+                            navigator.share({
+                                files: [file],
+                                title: 'QR Code',
+                                text: 'Voici le QR code chiffré'
+                            }).then(() => {
+                                showFeedback('encryptFeedback', 'QR code partagé avec succès', 'success');
+                            }).catch((error) => {
+                                console.error('Erreur lors du partage:', error);
+                                showFeedback('encryptFeedback', 'Erreur lors du partage du QR code', 'error');
+                            });
+                        });
+                } else {
+                    showFeedback('encryptFeedback', "Le partage n'est pas pris en charge sur ce navigateur", 'error');
+                }
+            } else {
+                showFeedback('encryptFeedback', "Aucun QR code n'a été généré", 'error');
+            }
+        }
+
+        function downloadQRCode() {
+            const qrCodeImage = document.querySelector('#qrcode img');
+            if (qrCodeImage && qrCodeImage.complete) {
+                const link = document.createElement('a');
+                link.href = qrCodeImage.src;
+                link.download = 'qrcode.png';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                showFeedback('encryptFeedback', 'QR code téléchargé avec succès', 'success');
+            } else {
+                showFeedback('encryptFeedback', "Le QR code n'est pas encore généré ou chargé", 'error');
+            }
+        }
+
+        function decrypt() {
+            const encryptedMessage = document.getElementById('encryptedMessage').value;
+            const password = document.getElementById('decryptKey').value;
+            
+            if (!encryptedMessage || !password) {
+                showFeedback('decryptFeedback', 'Veuillez entrer un message chiffré et un mot de passe', 'error');
+                return;
+            }
+
+            try {
+                const salt = CryptoJS.enc.Hex.parse(encryptedMessage.substr(0, 32));
+                const iv = CryptoJS.enc.Hex.parse(encryptedMessage.substr(32, 32));
+                const ciphertext = encryptedMessage.substring(64);
+
+                const key = deriveKey(password, salt);
+
+                const decryptedBytes = CryptoJS.AES.decrypt(ciphertext, key, {
+                    mode: CryptoJS.mode.CBC,
+                    padding: CryptoJS.pad.Pkcs7,
+                    iv: iv
+                });
+
+                const decryptedData = JSON.parse(decryptedBytes.toString(CryptoJS.enc.Utf8));
+
+                if (new Date().getTime() > decryptedData.expirationDate) {
+                    showFeedback('decryptFeedback', 'Ce message a expiré et ne peut plus être déchiffré.', 'error');
+                    document.getElementById('decryptedMessage').textContent = '';
+                    document.getElementById('decryptExpirationInfo').textContent = '';
+                } else {
+                    showFeedback('decryptFeedback', 'Message déchiffré avec succès !', 'success');
+                    document.getElementById('decryptedMessage').textContent = 'Message déchiffré : ' + decryptedData.message;
+                    updateDecryptionExpirationInfo(decryptedData.expirationDate);
+                }
+
+                document.getElementById('encryptedMessage').value = '';
+                document.getElementById('decryptKey').value = '';
+            } catch (error) {
+                console.error('Erreur de déchiffrement:', error);
+                let errorMessage = 'Erreur lors du déchiffrement. ';
+                if (error instanceof SyntaxError) {
+                    errorMessage += 'Le message chiffré semble être invalide.';
+                } else if (error.message.includes('Malformed UTF-8 data')) {
+                    errorMessage += 'Le mot de passe semble être incorrect.';
+                } else {
+                    errorMessage += 'Vérifiez le message et le mot de passe.';
+                }
+                showFeedback('decryptFeedback', errorMessage, 'error');
+                document.getElementById('decryptedMessage').textContent = '';
+                document.getElementById('decryptExpirationInfo').textContent = '';
+            }
+        }
+
+        function updateDecryptionExpirationInfo(expirationDate) {
+            clearInterval(decryptExpirationInterval);
+            const expirationInfoElement = document.getElementById('decryptExpirationInfo');
+            
+            const updateTimer = () => {
+                const now = new Date().getTime();
+                const distance = expirationDate - now;
+                
+                if (distance < 0) {
+                    clearInterval(decryptExpirationInterval);
+                    expirationInfoElement.textContent = "Le message a expiré";
+                    return;
+                }
+                
+                const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+                
+                expirationInfoElement.textContent = `Le message expire dans : ${days}j ${hours}h ${minutes}m ${seconds}s`;
+            };
+
+            updateTimer();
+            decryptExpirationInterval = setInterval(updateTimer, 1000);
+        }
+
+        function showFeedback(elementId, message, type) {
+            const feedbackElement = document.getElementById(elementId);
+            feedbackElement.textContent = message;
+            feedbackElement.className = 'feedback ' + type;
+            setTimeout(() => {
+                feedbackElement.textContent = '';
+                feedbackElement.className = 'feedback';
+            }, 5000);
+        }
+
+        function updateButtonStates() {
+            const encryptBtn = document.querySelector('button[onclick="encryptAndGenerateQR()"]');
+            const decryptBtn = document.querySelector('button[onclick="decrypt()"]');
+            
+            const canEncrypt = document.getElementById('message').value.trim() !== '' && 
+                               document.getElementById('encryptKey').value.trim() !== '';
+            const canDecrypt = document.getElementById('encryptedMessage').value.trim() !== '' && 
+                               document.getElementById('decryptKey').value.trim() !== '';
+            
+            encryptBtn.disabled = !canEncrypt;
+            decryptBtn.disabled = !canDecrypt;
+        }
+
+        ['message', 'encryptKey', 'encryptedMessage', 'decryptKey'].forEach(id => {
+            document.getElementById(id).addEventListener('input', updateButtonStates);
+        });
+
+        updateButtonStates();
+    </script>
+</body>
+</html>
