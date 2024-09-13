@@ -1,0 +1,288 @@
+<html><head><base href="https://portefeuille-futuriste.com/">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Comparaison Futuriste de Portefeuilles d'Investissement</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+
+    body {
+        font-family: 'Orbitron', sans-serif;
+        line-height: 1.6;
+        color: #00ffff;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #000033;
+        background-image: 
+            radial-gradient(white, rgba(255,255,255,.2) 2px, transparent 40px),
+            radial-gradient(white, rgba(255,255,255,.15) 1px, transparent 30px),
+            radial-gradient(white, rgba(255,255,255,.1) 2px, transparent 40px),
+            radial-gradient(rgba(255,255,255,.4), rgba(255,255,255,.1) 2px, transparent 30px);
+        background-size: 550px 550px, 350px 350px, 250px 250px, 150px 150px;
+        background-position: 0 0, 40px 60px, 130px 270px, 70px 100px;
+        animation: backgroundAnimation 60s linear infinite;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        flex-wrap: wrap;
+    }
+
+    @keyframes backgroundAnimation {
+        0% { background-position: 0 0, 40px 60px, 130px 270px, 70px 100px; }
+        100% { background-position: 550px 550px, 390px 410px, 380px 820px, 220px 650px; }
+    }
+
+    .portfolio {
+        background-color: rgba(0, 0, 51, 0.8);
+        border-radius: 15px;
+        box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+        margin: 10px;
+        padding: 20px;
+        backdrop-filter: blur(10px);
+        transition: all 0.3s ease;
+        flex: 1 1 45%;
+        min-width: 300px;
+    }
+
+    .portfolio:hover {
+        box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+        transform: translateY(-5px);
+    }
+
+    h2 {
+        color: #00ffff;
+        text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+    }
+
+    .chart-container {
+        width: 100%;
+        max-width: 600px;
+        margin: 0 auto;
+        position: relative;
+    }
+
+    canvas {
+        border-radius: 10px;
+    }
+
+    #hologramContainer {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: -1;
+    }
+
+    .input-container {
+        margin-top: 20px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    input[type="number"] {
+        background-color: rgba(0, 255, 255, 0.1);
+        border: 2px solid #00ffff;
+        border-radius: 5px;
+        color: #00ffff;
+        font-family: 'Orbitron', sans-serif;
+        font-size: 16px;
+        padding: 10px;
+        margin-right: 10px;
+        width: 150px;
+    }
+
+    button {
+        background-color: #00ffff;
+        border: none;
+        border-radius: 5px;
+        color: #000033;
+        cursor: pointer;
+        font-family: 'Orbitron', sans-serif;
+        font-size: 16px;
+        font-weight: bold;
+        padding: 10px 20px;
+        transition: all 0.3s ease;
+    }
+
+    button:hover {
+        background-color: #000033;
+        color: #00ffff;
+        box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+    }
+</style>
+</head>
+<body>
+    <div id="hologramContainer"></div>
+
+    <div class="portfolio">
+        <h2>Portefeuille Sous-Évalué</h2>
+        <div class="chart-container">
+            <canvas id="portfolioChart1"></canvas>
+        </div>
+        <div class="input-container">
+            <input type="number" id="investment1" placeholder="Montant à investir">
+            <button onclick="calculateInvestment(1)">Calculer</button>
+        </div>
+    </div>
+
+    <div class="portfolio">
+        <h2>Portefeuille Diversifié</h2>
+        <div class="chart-container">
+            <canvas id="portfolioChart2"></canvas>
+        </div>
+        <div class="input-container">
+            <input type="number" id="investment2" placeholder="Montant à investir">
+            <button onclick="calculateInvestment(2)">Calculer</button>
+        </div>
+    </div>
+
+    <script>
+        const ctx1 = document.getElementById('portfolioChart1').getContext('2d');
+        const chart1 = new Chart(ctx1, {
+            type: 'doughnut',
+            data: {
+                labels: ['Intel (INTC)', 'Chevron (CVX)', 'Ford (F)', 'General Motors (GM)', 'Bank of America (BAC)', 'Regions Financial (RF)', 'Bristol-Myers Squibb (BMY)', 'Verizon (VZ)', 'Vanguard Bond ETF (BND)'],
+                datasets: [{
+                    data: [20, 15, 8, 7, 10, 10, 10, 10, 10],
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.8)',
+                        'rgba(54, 162, 235, 0.8)',
+                        'rgba(255, 206, 86, 0.8)',
+                        'rgba(75, 192, 192, 0.8)',
+                        'rgba(153, 102, 255, 0.8)',
+                        'rgba(255, 159, 64, 0.8)',
+                        'rgba(201, 203, 207, 0.8)',
+                        'rgba(255, 0, 0, 0.8)',
+                        'rgba(0, 255, 0, 0.8)'
+                    ],
+                    borderColor: 'rgba(0, 255, 255, 1)',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            color: '#00ffff'
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: 'Répartition du Portefeuille Sous-Évalué',
+                        color: '#00ffff',
+                        font: {
+                            size: 16
+                        }
+                    }
+                },
+                animation: {
+                    animateScale: true,
+                    animateRotate: true
+                }
+            }
+        });
+
+        const ctx2 = document.getElementById('portfolioChart2').getContext('2d');
+        const chart2 = new Chart(ctx2, {
+            type: 'doughnut',
+            data: {
+                labels: ['VT', 'SPY', 'QQQ', 'IXJ', 'ICLN', 'IAU', 'BTC'],
+                datasets: [{
+                    data: [30, 25, 15, 10, 10, 5, 5],
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.8)',
+                        'rgba(54, 162, 235, 0.8)',
+                        'rgba(255, 206, 86, 0.8)',
+                        'rgba(75, 192, 192, 0.8)',
+                        'rgba(153, 102, 255, 0.8)',
+                        'rgba(255, 159, 64, 0.8)',
+                        'rgba(201, 203, 207, 0.8)'
+                    ],
+                    borderColor: 'rgba(0, 255, 255, 1)',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            color: '#00ffff'
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: 'Répartition du Portefeuille Diversifié',
+                        color: '#00ffff',
+                        font: {
+                            size: 16
+                        }
+                    }
+                },
+                animation: {
+                    animateScale: true,
+                    animateRotate: true
+                }
+            }
+        });
+
+        function calculateInvestment(portfolioNumber) {
+            const investmentInput = document.getElementById(`investment${portfolioNumber}`);
+            const investment = parseFloat(investmentInput.value);
+
+            if (isNaN(investment) || investment <= 0) {
+                alert("Veuillez entrer un montant d'investissement valide.");
+                return;
+            }
+
+            const chart = portfolioNumber === 1 ? chart1 : chart2;
+            const percentages = chart.data.datasets[0].data;
+            const labels = chart.data.labels;
+
+            const allocations = percentages.map((percentage, index) => {
+                const amount = (investment * percentage) / 100;
+                return `${labels[index]}: ${amount.toFixed(2)} €`;
+            });
+
+            alert(`Répartition de l'investissement de ${investment} € pour le ${portfolioNumber === 1 ? 'Portefeuille Sous-Évalué' : 'Portefeuille Diversifié'}:\n\n${allocations.join('\n')}`);
+        }
+
+        // Three.js hologram effect
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('hologramContainer').appendChild(renderer.domElement);
+
+        const geometry = new THREE.TorusGeometry(5, 1, 16, 100);
+        const material = new THREE.MeshBasicMaterial({ color: 0x00ffff, wireframe: true });
+        const torus = new THREE.Mesh(geometry, material);
+        scene.add(torus);
+
+        camera.position.z = 15;
+
+        function animate() {
+            requestAnimationFrame(animate);
+            torus.rotation.x += 0.01;
+            torus.rotation.y += 0.01;
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
